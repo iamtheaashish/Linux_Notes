@@ -1,0 +1,141 @@
+# The following RHCSA exam objectives are covered in this chapter:
+# Use input-output redirection (>, >>, |, 2>, etc.)
+# Access a shell prompt and issue commands with correct syntax
+# Create and edit text files
+# Locate, read, and use system documentation including man, info, and files in /usr/share/doc
+=============================================================================================
+"Shell is default working environment where users and administrators enter 
+commands that are executed by the operating system. 
+BASH is the default shell in most Linux distributions.
+The purpose of the Linux shell is to provide an environment in which commands can be executed."
+=============================================================================================
+< Understanding Commands >
+Commands syntax:
+    $ command [options] [arguments]
+    $ ls -l /home/user
+    `-l` is option and `/home/user` is argument.
+
+The word argument is a bit confusing. Generally speaking, it refers to anything that the command
+addresses, so anything you put after the command is an argument (including the options). Apart
+from the options that can be used as an argument, commands can have other arguments as well,
+which serve as a target to the command.
+
+Even `-l` is an argument(option).
+
+The command `ls -l /home/user`. This command has two different arguments: `-l` and `/home/user`.
+The first argument is an option, modifying the behavior of the command.
+The second argument is a target, specifying where the command should do its work. You’ll find
+these three elements in nearly all commands you work with in a Linux environment.
+
++ There are three types of commands:
+1. Alias:
+A shortcut for a longer command or series of commands. Some are there by default, and 
+you can create your own. For example, `ll` is often an alias for `ls -l`.
+2. Internal Commands:
+These are built into the shell itself and are executed directly by the shell. 
+3. External Commands:
+These are not built into the shell and are usually found in the system's file hierarchy. 
+They are executed by the shell as separate processes. They are slow to execute.
+When a user executes a command, the shell first looks to determine whether it is an
+internal command; if it is not, it looks for an executable file with a name that matches
+the command on disk.
+# To find what type of command it is, use `type <command>`. Example `type ls`
+
+# To find out which exact command the shell is executing, use `which <command>`.
+# Example `which ls`
+=============================================================================================
+< I/O Redirection >
+"By default, 
+the output of a command is displayed on the terminal (standard output), 
+the input is taken from the keyboard (standard input) and 
+the error messages are displayed on the terminal (standard error).
+Redirection is useful if you want to work with input from an alternative location, such as a file."
+
+`> (same as 1>)` Redirects STDOUT to a file, overwriting the file if it exists.
+`>>` Redirects STDOUT to a file, appending the output to the file if it exists.
+`2>` Redirects STDERR to a file, overwriting the file if it exists.
+`2>>` Redirects STDERR to a file, appending the output to the file if it exists.
+`&>` Redirects both STDOUT and STDERR to a file, overwriting the file if it exists.
+`&>>` Redirects both STDOUT and STDERR to a file, appending the output to the file if it exists.
+`<` Redirects STDIN from a file instead of the keyboard.
+
+< Using Pipes>
+"Pipe can be used to catch the output of one command and use that as input for a second command."
+/Example:
+$ ls -l | less
+This command lists the files in long format and pipes the output to the less command, 
+allowing for easy scrolling through the output.
+=============================================================================================
+< Using Command `History` >
+"By default, Bash is configured to keep last 1000 commands in memory. When a shell session is 
+closed, the history of that session is updated to the history file. The name of this file is
+.bash_history and it is created in the home directory of the user who started a
+specific shell session. Notice that the history file is written to only when the shell 
+session is closed; until that moment, all commands in the history are kept in memory."
+$ history
+This command displays the list of commands that have been entered in the current shell session.
+$ history --help
+$ !<event_number> # re-execute command number <event_number>
+$ !32 # re-execute command number 32
+$ !! # re-execute last command
+$ history -d <event_number> # delete command number <event_number> from history
+$ history -c # clear the history list
+$ history -w <file> # write the current history to a file
+=============================================================================================
+< BASH Completion >
+"By default, Bash provides a feature called command completion, which allows users to
+quickly complete commands and file names by pressing the Tab key. This feature can save
+time and reduce errors when typing commands."
+
+Example: Type gd and press TAB key 2 times.
+=============================================================================================
+< Editing Files with VIM >
+"Most things that are configured on Linux are configured through files. You need a text editor."
+* VIM = Vi IMproved *
+$ dnf install vim -y # install vim text editor
+$ dnf install vim-enhanced -y # install enhanced version of vim
+$ vimtutor # start vim tutorial
+$ vim <file_name> # open <file_name> in vim editor, if it doesn't exists it creates a new file.
+
+VIM uses different modes, primarily: Command mode and Insert mode.
+Vim has vast number of commands. But we need to use minimal commands that are important.
+
+1.ESC : Switch to Command mode.
+2.i,a : Switch to Insert mode. (i = insert before cursor, a = insert after cursor)
+3.o : Open a new line below the current line and switch to Insert mode.
+4.:wq : Save changes and exit Vim.
+5.q! : Exit Vim without saving changes.
+6.w filename : Writes the current file with a new filename.
+7.dd : Delete the current line.
+8.yy : Yank (copy) the current line.
+9.p : Paste the yanked or deleted text after the cursor.
+10.v : Start visual mode to select text using arrow keys. 
+       Use `y` to yank the selected text and `d` to delete it.
+11.u : Undo the last change.
+12.Ctrl + r : Redo the last undone change.
+13.gg : Goes to the first line in the document.
+14.G : Goes to the last line in the document.
+15./text : Search for 'text' in the document.
+16.?text : Search for 'text' in the document backward.
+17.^ : Goes to first position in the current line.
+18.$ Goes to last position in the current line.
+19.!ls : Execute shell command (ls in this case) and display output in vim.
+20.!<command> : Execute any shell command and display output in vim.
+21.:%s/old/new/g : Replace all occurrences of 'old' with 'new' in the document.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
