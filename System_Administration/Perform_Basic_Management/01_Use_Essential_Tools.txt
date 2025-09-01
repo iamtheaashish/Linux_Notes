@@ -122,20 +122,60 @@ Vim has vast number of commands. But we need to use minimal commands that are im
 19.!ls : Execute shell command (ls in this case) and display output in vim.
 20.!<command> : Execute any shell command and display output in vim.
 21.:%s/old/new/g : Replace all occurrences of 'old' with 'new' in the document.
+=============================================================================================
+< Understanding the Shell Environment >
+"Variables are fixed named that can be assigned dynamic values. They are used to store information
+that can be referenced and manipulated in scripts and commands.The advantage of working with variables for scripts and programs is that the program only has to
+use the name of the variable without taking interest in the specific value that is assigned to the
+variable. Because different users have different needs, the variables that are set in a user
+environment will differ."
 
+$ env # Display the current environment variables for important system settings
 
++ Environment Configuration Files
+1. /etc/profile # Generic file that is processed by all users upon login
+2. /etc/bashrc # Processed when subshells are started
+3. ~/.bash_profile # User-specific file that is processed upon login
+4. ~/.bashrc # User-specific file that is processed when subshells are started
 
++ Using /etc/motd and /etc/issue
+"These files are used to display messages to users upon login."
+$ cat /etc/motd # Display the message of the day
+$ cat /etc/issue # Display the issue message before login
+/* Using /etc/motd can be a convenient way for system administrators to inform users about
+an issue or a security policy. Another way to send information to users is by using /etc/issue.
+The contents of this file display before the user logs in from a text-based console interface.
+Using this file provides an excellent means of specifying login instructions to users who are
+not logged in yet. */
+=============================================================================================
+< Finding Help >
+$ <command> --help # short description of the command
+$ man <command> # detailed manual for the command
+$ info <command> # more information about the command
 
++ Man Command Essentials
+$ man <command>
+1. To get to bottom of man page, press `G`.
+2. To search for examples, press `/` and type `example`.
 
+Just type `man -k <keyword>` to search the man pages for a specific keyword.
+It is not perfect but it works. It searches the short descriptions and titles.
 
+Just type `man -f <command>` to get a brief description of the command.
 
+* Updating mandb *
+$ sudo mandb # Update the manual page database
 
++ Tip: Do not memorize all the commands that you need to accomplish specific tasks.
++ Instead, memorize how to find these commands and find which man page to read to get more info.
 
++ Info pages
+When working with info, take a look at the top line of the viewer. This shows the current position in
+the info document. Particularly interesting are the Up, Next, and Previous indicators, which tell you
+how to navigate. Info pages are organized like web pages, which means that they are organized in
+a hierarchical way. To browse through that hierarchy, type n to go to the next page, p to go to the
+previous page, or u to move up in the hierarchy.
+$ dnf install info -y # if info command not found
 
-
-
-
-
-
-
-
++ /usr/share/doc
+# Not every command will have documentation in /usr/share/doc
