@@ -1,0 +1,167 @@
+# The following RHCSA exam objectives are covered in this chapter:
+# Create, delete, copy, and move files and directories
+# Archive, compress, unpack, and uncompress files using tar, star, gzip, and bzip2
+# Create hard and soft links
+=============================================================================================
+Linux is a file-oriented operating system, which means that everything is treated as a file, 
+including hardware devices and processes. This design philosophy simplifies the way users 
+interact with the system and allows for powerful file management capabilities. 
+=============================================================================================
+< File System Hierarchy >
+To manage a Linux system, be familiar with the default directories that exists on almost all 
+Linux distributions. The following are some of the key directories you should know:
+
+/ (root) - The top-level directory in the file system hierarchy.
+/bin - Contains essential user binaries (executables).
+/boot - Contains the Linux kernel and bootloader files.
+/dev - Contains device files representing hardware devices.
+/etc - Contains system configuration files.
+/home - Contains user home directories.
+/lib - Contains shared libraries and kernel modules.
+/media - Contains mount points for removable media (e.g., USB drives).
+/mnt - Contains mount points for temporarily mounted filesystems.
+/opt - Contains optional software packages.
+/proc - Used by the proc file system. It gives access to kernel information.
+/root - The home directory for the root user.
+/run - Contains runtime data for processes started since the last boot.
+/srv - Contains data for services provided by the system. Like NFS, FTP, and HTTP.
+/sys - Used as an interface to different hardware devices that are managed by the Linux kernel 
+and associated processes.
+/tmp - Contains temporary files that may be deleted without any warning during boot.
+/usr - Contains subdirectories for user-related programs and data.
+/var - Contains variable data files, such as logs, mail boxes, spool, and databases.
+(lost+found) - A directory used by the filesystem to store recovered files after a crash.
+
+< Understanding Mounts >
+To understand organization of Linux file system, it's crucial to understand the important concept
+of mounting. 
++ A Linux file system is presented as one hierarchy, with the root directory (/) as its starting
++ point. This hierarchy may be distributed over different devices and even computer systems that 
++ are mounted into the root directory.
+
++ In process of mounting, a device is connected to a specific directory, such that after a
++ successful mount operation, the contents of the device become accessible at that directory
++ location.
+
+> Mounting devices allows for greater flexibility and organization of the file system. 
+> Storing files in just one file system is a disadvantage:
+    1. High activity in one area may fill up the entire file system, 
+    which will negatively impact services running on the server.
+    2. If all files are on the same device, it is difficult to secure access and
+    distinguish between different areas of the file system with different security needs. 
+    By mounting a separate file system, you can add mount options to meet specific security needs.
+    3. If a one-device file system is completely filled, it may be difficult to make 
+    additional storage space available.
+
+/boot - Often mounted on a separate device because it requires essential info your computer needs
+        to boot. 
+/boot/efi - If system uses Extensible Firmware Interface for booting, a dedicated mount is required,
+            giving access to all files required in the earliest stages of the boot process.
+/var - This directory is often on a dedicated device because it grows in a dynamic and 
+       uncontrolled manner, particularly with log files and spools.
+/home - When this directory is on separate device, it can survive system reinstall. 
+        By mounting it with specific options like `noexec` and `nodev`, you can enhance security.
+
+
+$ mount # gives overview of all mounted devices.
+/proc/mounts # kernel maintains a list of all mounted filesystems here.
+
+$ df -hT # shows disk space usage for all mounted filesystems. df --help for more
+# You can also see a couple of tmpfs devices. These are kernel devices that are used to create
+# a temporary file system in RAM.
+$ findmnt # displays a tree of all mounted filesystems, output of mount is overwhelming
+=============================================================================================
+< Managing Files >
+As a sys admin, these are your tasks:
+"   Working with wildcards
+    Managing and working with directories
+    Working with absolute and relative pathnames
+    Listing files and directories
+    Copying files and directories
+    Moving files and directories
+    Deleting files and directories
+"
+
++ Working with WILDCARDS (makes your work easier)
+
+   Wildcards are special characters that allow you to select multiple files or directories
+   at once. The most common wildcards are:
+   - `*` (asterisk): Matches any number of characters, including none.
+   - `?` (question mark): Matches a single character.
+   - `[...]` (brackets): Matches any one of the enclosed characters.
+
+   Examples:
+   - `*.txt` matches all text files in a directory.
+   - `file?.jpg` matches files like `file1.jpg` and `file2.jpg`, but not `file10.jpg`.
+   - `file[1-3].jpg` matches `file1.jpg`, `file2.jpg`, and `file3.jpg`.
+
+< Managing and Working with Directories >
+$ mkdir <directory_name>
+$ ls -l <directory_name> # list contents of a directory
+$ rmdir <directory_name>
+$ cd <directory_name> # change to the new directory
+
+? Absolute Pathname:
+An absolute pathname is the full path to a file or directory, starting from the root directory (/). 
+It provides the complete location of the file or directory in the file system hierarchy.
+> Examples:
+- `/home/user/documents/file.txt` is an absolute pathname.
+- `/var/log/syslog` is another example of an absolute pathname.
+
+? Relative Pathname:
+A relative pathname is a path to a file or directory that is relative to the current working directory. 
+It does not start from the root directory (/), but instead starts from the current directory.
+> Examples:
+- `doc/file.txt` is a relative pathname if the current directory is `/home/user`.
+- `../user/doc/file.txt` is a relative pathname that goes up one level from the current directory.
+
+* Using absolute pathname is recommended to be error proof.
++ Bash compilations also works with file names. 
+
+< Listing Files and Directories >
+$ ls 
+$ ls -l
+$ ls --help # learn more about ls by yourself.
+
+# A hidden file on Linux is a file that has a name that starts with a dot (.).
+
+< Copying Files and Directories >
+$ cp <source> <destination> # copy a file
+$ cp -r <source_directory> <destination_directory> # copy a directory recursively
+$ cp --help # more info about cp
+$ cp -a <source> <destination> # copy a file or directory preserving attributes(like permissions)
+
+Copying hidden files is a challenge lol.
+$ cp /somedir/.* /tmp # copy all files that have names starting with a dot.
+# But this command will give an error because it tries to copy the special directories . and ..
+# But we wanted to copy files and not directories, otherwise we could have used -r option.
+
+< Moving Files and Directories >
+$ mv <source> <destination> # move a file
+$ mv --help # more info about mv
+
+< Deleting Files and Directories >
+$ rm <file> # delete a file
+$ rm -r <directory> # delete a directory and its contents
+$ rm --help # more info about rm
+
+# on RHEL 9 and 10, if you use rm command, it prompt for confirmation. The reason is that
+# through /root/.bashrc, the alias `rm` is set to `rm -i`, which means "interactive".
+# You can even remove that alias if you want to disable the interactive prompt.
+# It is a safety feature to prevent accidental deletions.
+=============================================================================================
+< Using Links > 
+To understand links, we need to understand how Linux uses inodes for file administration.
+
+"Every file on Linux has an inode number, and in inode, important information 
+about the file is stored, such as its size, permissions, ownership, and location on the disk,
+Except for the file name."
+
+"Names are stored in the directory and each filename knows which inode it has been assigned."
+
+"Inode does not know WHICH name it has, it just know HOW many names it has."
+
+"These names are called Hard Links. Every single file has at least one hard link."
+
++ Hard links have pros and cons. 
+
