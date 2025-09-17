@@ -1,0 +1,149 @@
+# The following RHCSA objectives are covered in this section:
+# - Using Common Text File Related Tools
+# - A Primer to using regular expressions
+# - Using grep to analyze text files
+# - Working with other useful text processing tools
+
+< Using Common Text File Related Tools >
++ Doing More with Less:
+$ more filename.txt # if text file is large
+$ less filename.txt # if text file is large
+$ less /etc/passwd 
+# Press 'q' to quit less
+# Search specific text in less by typing '/' followed by the text and pressing Enter
+# Navigate with arrow keys, Page Up/Down, Home/End
+`Once upon a time, less was developed because it offered more features than the
+classical UNIX tool more, which was developed to go through file contents page by
+page. So, the idea was to do more with less. Developers did not like that, so they
+enhanced the features of the more command as well. The result is that both more and
+less offer many features that are similar, and which tool you use doesn’t really matter
+that much anymore. There is one significant difference, though, and that is the more
+utility ends if the end of the file is reached. To prevent this behavior, you can start
+more with the -p option. Another difference is that the more tool is a standard part of
+any Linux and UNIX installation. This is not the case for less, which may have to be
+installed separately.`
+
++ Magic of Cat and Tac:
+$ cat filename.txt # if text file is small
+$ cat /etc/passwd # Concatenate and display file content
+$ tac filename.txt # Display file content in reverse order (last line first)
+(inverted of cat, lol!)
+
++ First and Last Lines of a File:
+$ head filename.txt # Display the first 10 lines of a file
+$ head -n 5 filename.txt # Display the first 5 lines of a file
+$ tail filename.txt # Display the last 10 lines of a file
+$ tail -n 5 filename.txt # Display the last 5 lines of a file
+$ tail -f /var/log/messages # Continuously monitor a file for new lines (useful for log files)
+# Press 'Ctrl + C' to stop monitoring. It is very useful command for sysadmins.
+
++ Filtering Specific Columns from a File:
+$ cut -d: -f1 /etc/passwd # Display only the first field (username) from /etc/passwd, 
+# using ':' as the delimiter
+$ cut -d: -f1,3 /etc/passwd # Display the first and third fields (username and UID) 
+# from /etc/passwd
+
++ Sorting File Content:
+$ sort filename.txt # Sort file content alphabetically
+$ sort -r filename.txt # Sort file content in reverse order
+$ sort -n numbers.txt # Sort numerical data in a file
+
+$ du -sh * | sort -rn # Sort files and directories by size in descending order
+# 'du -sh *' gives size of all files and directories in current directory
+# 'sort -rn' sorts the output numerically in reverse order
+
++ Counting Lines, Words, and Characters with wc:
+$ wc filename.txt # Display the number of lines, words, and characters in a file
+$ wc -l filename.txt # Display only the number of lines in a file
+$ wc -w filename.txt # Display only the number of words in a file
+$ wc -c filename.txt # Display only the number of characters in a file 
+
++ A primer to using regular expressions:
+# Regular expressions (regex or regexp) are sequences of characters that form a search pattern.
+# They are used for pattern matching within strings. Here are some basic regex components:
+.  # Matches any single character except newline
+^  # Matches the start of a line
+$  # Matches the end of a line
+*  # Matches zero or more occurrences of the preceding element
++  # Matches one or more occurrences of the preceding element
+?  # Matches zero or one occurrence of the preceding element
+[] # Matches any one of the characters inside the brackets
+|  # Acts as a logical OR between expressions
+() # Groups expressions
+
++ Using grep to analyze text files:
+$ grep 'pattern' filename.txt # Search for 'pattern' in filename.txt
+$ grep anand filename.txt # Find lines containing 'anand'
+$ grep -i anand filename.txt # Case-insensitive search for 'anand'
+$ grep ^anand filename.txt # Find lines starting with 'anand'
+$ grep anand$ filename.txt # Find lines ending with 'anand'
+$ grep -E 'anand|root' filename.txt # Find lines containing 'anand' or 'root'
+$ egrep 'anand|root' filename.txt # Same as above, using egrep
+
+> practical example:
+1. create a file with name regex.txt and add following lines:
+   anand
+   Anand
+   anandkumar
+   kumar
+   root
+   administrator
+   admin
+
+2. Now, run following commands:
+$ grep anand regex.txt # Finds lines containing 'anand'
+$ grep 'a.*d' regex.txt
+# Finds lines containing 'a' followed by any characters and ending with 'd'
+$ grep -E 'a.+d' regex.txt
+# Finds lines containing 'a' followed by one or more characters and ending with 'd'
+=============================================================================================
+< Working with other useful text processing tools >
++ Using awk for Advanced Text Processing:
+# awk was made when computers were not as powerful as they are today. It is a programming language
+# that is used for pattern scanning and processing. It is particularly useful for handling
+# structured data, such as text files with columns of data. Here are some basic awk commands:
+# NO NEED TO MASTER IT, JUST KNOW IT EXISTS
+
+$ awk -F : '{print $4}' /etc/passwd
+# Display the fourth field (GID) from /etc/passwd, using ':' as the delimiter
+$ awk -F : '/aashish/ {print $1, $3}' /etc/passwd
+# Find lines containing 'aashish' and display the first (username) and third (UID) fields
+
++ Using sed for Stream Editing:
+# sed (stream editor) is a powerful text processing tool that can perform basic
+# text transformations. Here are some common sed commands:
+
+$ sed -i s/old/new/g filename.txt
+# Replace all occurrences of 'old' with 'new' in filename.txt
+
+$ sed -n 5p /etc/passwd
+# Print the 5th line of /etc/passwd
+
+# The default sed behavior is to write the output to STDOUT, 
+# but the option -i will write the result directly to the file. 
+# Make sure that you know what you are doing before using this command,
+# because it might be difficult to revert file modifications that are applied in this way
+
+# Do not focus on awk and sed too much. These are amazing utilities, but many of the
+# things that can be accomplished using them can be done using other tools as well. The
+# awk and sed tools are very rich, and you can easily get lost in them if you are trying to
+# dig too deep.
+=============================================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
