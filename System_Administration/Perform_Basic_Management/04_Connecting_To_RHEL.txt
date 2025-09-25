@@ -1,0 +1,164 @@
+# The following RHCSA Exam Objective are covered in this file:
+# 1. Access remote systems using SSH
+# 2. Log in and switch users in multiuser targets
+# 3. Boot, reboot, and shut down a system normally
+# 4. Securely transfer files between systems
+# 5. Configure key-based authentication for SSH
+
+"You can have multiple terminals open on a console. 
+But you can't have multiple consoles open on a terminal."
+
+"Terminals are opened as sub-shells of consoles. 
+You don't have to login again to open a terminal."
+=============================================================================================
+< Understanding Pseudo Terminal Devices >
+# A long time ago, big central computers were used, to which dumb terminal devices
+# were connected. These dumb terminal devices consisted of nothing more than a
+# monitor and keyboard attached to it. From each of these dumb terminal devices, a
+# console session to the operating system could be started. On a modern Linux server, no
+# dumb terminals are attached. They have been replaced with the virtual terminals
+# described here.
+
+# A pseudo terminal (or pty) is a software interface that emulates a physical terminal
+# within a computer system. It provides a way for programs to interact with each other
+# as if they were communicating through a traditional terminal device.
+
+* Every Terminal used in Linux has a device file associated with it.*
+* like /dev/pts/0 , /dev/pts/1 , /dev/tty1 , /dev/tty2 etc. *
+
+Terminal Started on Machine ---> /dev/pts/0 <--- Terminal Device File
+Terminal Started on SSH Session ---> /dev/tty1 <--- Terminal Device File
+
+$ w 
+# This command shows who is logged in and what they are doing.
+# The TTY column shows the terminal device file associated with each session.
+$ who 
+# This command shows who is logged in.
+$ su - # Switch user to root
+$ exit # Exit from root user to normal user
+=============================================================================================
+< Booting, Rebooting, and Shutting Down Systems >
++ Why reboot in first place ?
+1. To recover from serious problems such as server hangs and kernel panics.
+2. To apply kernel updates.
+3. To apply changes to kernel modules that are being used currently and therefore cannot be 
+*  reloaded.
+
++ Rebooting a system
+# You have to alert the systemd process to initiate a reboot. It is the first process started
+# when the server was booted. It has the process ID (PID) 1.
+# To tell systemd to reboot the system, use the following command:
+$ sudo systemctl reboot
+$ sudo systemctl halt 
+$ systemctl poweroff
+# Normally, they would reboot or stop the machine. If they don't we have something.
+$ echo b > /proc/sysrq-trigger # immediate reboot without saving, only used in emergencies
+$ echo o > /proc/sysrq-trigger # immediate shutdown without saving, only used in emergencies
+=============================================================================================
+< Using SSH and Related Tools >
+# SSH (Secure Shell) is a protocol that allows secure remote access to a computer over an
+# unsecured network. It provides a secure channel for communication between two computers,
+# allowing users to log in and execute commands on a remote machine as if they were sitting
+# in front of it.
+
+# Many administrators use SSH to manage servers and other network devices remotely,
+# as it provides a secure and encrypted way to access these systems.
+
+* To access a server using SSH, you need the sshd server process as well as an SSH client.
+* The default port for SSH is 22. It shouldn't be blocked by the firewall.
+$ ssh # By default it tries to reach sshd process onthe server port 22,
+# If you have different port you can specify it using -p option.
+$ ssh -p 2222 user@hostname_or_ip_address
+-----
+$ systemctl status sshd # Check if sshd service is running on server
+$ ip a | grep 'inet' # Check server IP address
+$ sudo firewall-cmd --list-all # Check if port 22 is allowed in firewall
+$ sudo firewall-cmd --add-service=ssh --permanent # Allow ssh service in firewall
+$ sudo firewall-cmd --reload # Reload firewall to apply changes
+-----
+"The security message in Example 5-1 is displayed because the remote server has never been
+contacted before and therefore there is no way to verify the identity of the remote server.
+After you connect to the remote server, a public key fingerprint is stored in the file 
+~/.ssh/known_hosts. The next time you connect to the same server, this fingerprint is checked
+with the encryption key that was sent over by the remote server to initialize contact.
+If the fingerprint matches, you will not see this message anymore.
+In some cases, the remote host key fingerprint does not match the key fingerprint that is stored
+locally. That is a potentially dangerous situation. Instead of being connected to the intended
+server, you might be connected to the server of an evildoer. It does, however, also happen
+if you are connecting to an IP address that you have been connected to before but that is
+now in use by a different server, or if the sshd service has been deleted and reinstalled."
+=============================================================================================
+< Securely Transferring Files Using SCP and SFTP >
+# SCP (Secure Copy Protocol) and SFTP (SSH File Transfer Protocol) are two different
+# protocols used for securely transferring files over a network.
+# Both protocols use SSH (Secure Shell) to provide a secure and encrypted connection
+# between the client and server.
+
+# scp is similar to cp command, but it works over a network connection using SSH.
++ Send file.txt to remote server
+$ scp file.txt user@remote_host:/path/to/destination/
++ Copy file.txt from remote server to local machine
+$ scp user@remote_host:/path/to/file.txt /local/destination/
+
++ to copy a directory and its contents, use the -r option
+$ scp -r /local/directory/ user@remote_host:/path/to/destination # send to remote
+$ scp -r user@remote_host:/path/to/directory/ /local/destination # copy from remote
+-----
+# SFTP provides FTP like commands to transfer files securely over SSH.
+# SFTP means SSH File Transfer Protocol or Secure File Transfer Protocol.
+$ sftp user@remote_host
+sftp> ls # List files in remote directory
+sftp> cd /path/to/directory # Change directory on remote server
+sftp> get file.txt # Download file from remote server to local machine
+sftp> put file.txt # Upload file from local machine to remote server
+sftp> exit # Exit SFTP session
+-----
+# rsync is a fast and versatile command for copying and synchronizing files and directories
+# both locally and remotely. It is commonly used for backups and mirroring and as an
+# improved copy command for everyday use.
+$ rsync -avz /local/directory/ user@remote_host:/path/to/destination/ # send to remote
+$ rsync -avz user@remote_host:/path/to/directory/ /local/destination/ # copy from remote
+# It has the following options:
+# -r : Synchronize directories recursively
+# -a : Archive mode, which preserves file permissions, ownership, timestamps, and symbolic links
+# -v : Verbose mode, which provides detailed output of the transfer process
+# -z : Compress file data during transfer to reduce the amount of data sent over the network
+# -p : Preserve file permissions
+# -l : Copy symlinks as symlinks
+=============================================================================================
+< Configuring Key-Based Authentication for SSH >
+# This authentication method is normally enabled by default because it is more secure than
+# password-based authentication. You just need to enable key-based login to create a key pair;
+# everything else is organized by default.
+
+# When using public/private key-based authentication, the user who wants to connect to a server
+# generates a public/private key pair. The private key needs to be kept private and will never be
+# distributed. The public key is stored in the home directory of the target user on the SSH server 
+# in the file .ssh/authorized_keys.
+
+# When authenticating using key pairs, the user generates a hash derived from the private key. This
+# hash is sent to the server, and if on the server it proves to match the public key that is stored 
+# on the server, the user is authenticated.
+
+1. Private Key: Super secret key that should be kept secure and not shared with anyone.
+` It is on the client machine. `
+2. Public Key: Can be shared with anyone, and is used to verify the authenticity of the private key.
+` It is on the server machine in ~/.ssh/authorized_keys file. `
+
+"Client says he want to connect to the server and he is going to use Private Key 
+to prove his identity. Server generates a random string and encrypts it using
+the Public Key of the client. Client uses his Private Key to decrypt the string.
+If the decrypted string matches the original string, the client is authenticated."
+
+"Client does some calculations on the string and sends the result back to the server.
+Server does the same calculations on the original string. If the result matches,
+the client is authenticated."
+
+AWS uses PEM file as Private Key to connect to EC2 instances.
+
+$ ssh-keygen
+# This command generates a public/private key pair.
+# By default, the keys are stored in the ~/.ssh directory with the names id_rsa (private key)
+# and id_rsa.pub (public key).
+
+============================================================================================= 
