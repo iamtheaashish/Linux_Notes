@@ -1,0 +1,180 @@
+# The following RHCSA exam objectives are covered in this chapter:
+#   Manage default permissions
+#   List, set, and change standard ugo/rwx permissions
+#   Create and configure set-GID directories for collaboration
+#   Diagnose and correct file permission problems
+=============================================================================================
+" It may on occasion be useful to get a list of all files on the system that have a given user
+ or group as owner."
+
+$ find / -user username
+# Finds all files owned by the specified user.
+# A user becomes the owner of a file when they create it. Although ownership can be changed later.
+$ find / -group groupname
+# Finds all files owned by the specified group.
+# A group becomes the owner of a file when it is created in a directory that has that group as its
+# group owner. Although ownership can be changed later.
+=============================================================================================
+< Changing User Ownership >
+$ chown who what
+$ chown linda files
+# Changes the owner of the specified files to the user 'linda'.
+$ chown -R linda files 
+# Recursively changes the owner of the specified files and directories to the user 'linda'.
+
+< Changing Group Ownership >
+We have two ways to change the group ownership of files:
+1. Using chown command
+2. Using chgrp command
+Preferred way is to use chgrp command.
+
+$ chown .account /home/account/
+or 
+$ chown :account /home/account/ # Preferred syntax
+# Changes the group ownership of the specified directory to 'account' group.
+--OR--
+$ chgrp account /home/account/
+# Changes the group ownership of the specified directory to 'account' group.
+=============================================================================================
+< Understanding Default Ownership >
+"By default, when a user creates a file, the user becomes the owner of that file, and the group
+owner is set to the user’s primary group (as defined in /etc/passwd)."
+
+$ newgrp groupname
+# Changes the current primary group to 'groupname' for the duration of the session.
+# This affects the group ownership of newly created files during this session.
+This group will continue to be used as the effective primary group until user 
+linda uses the exit command or logs out.
+
+$ groups lisa
+# Displays the groups that the user 'lisa' is a member of.
+=============================================================================================
+< Managing Basic Permissions >
+"Linux File Permissions were invented in 1970s. There are three types of permissions: read (r),
+write (w), and execute (x). These permissions can be set for three different categories of users:
+the file owner (user), the group owner (group), and others (world)."
+
++ READ (r) Permission
+  Allows a user to read the contents of a file or list the contents of a directory.
+But for directories, read permissions only allow you to list the files in the directory,
+not access them. YOU NEED READ permissions on the FILES inside the directory to view them.
+
+If you have both READ and EXECUTE permissions on a directory, 
+you can list the files and access them.
+
++ WRITE (w) Permission
+  Allows a user to modify the contents of a file or add/remove files in a directory.
+
+You need WRITE permission on a directory to create, delete, or rename files within that directory.
+
++ EXECUTE (x) Permission
+  Allows a user to execute a file (if it is a program or script) or access a directory.
+For directories, EXECUTE permission allows you to enter the directory and access its contents,
+provided you have the necessary permissions on the files themselves.
+
+"Permissions can be represented in two ways: symbolic notation (rwx) and octal notation (numeric)."
+"In symbolic notation, permissions are represented using letters: r (read), w (write), x (execute),
+and - (no permission). In octal notation, permissions are represented using numbers: 4 (read), 
+2 (write), 1 (execute), and 0 (no permission). The sum of these numbers represents the combined 
+permissions."
+
+To set permissions using numbers, calculate the sum for each category:
+- Read (r) = 4
+- Write (w) = 2
+- Execute (x) = 1
+
+For example:
+$ chmod 755 /somefile 
+# Sets READ-WRITE-EXEC for File Owner (7 = 4+2+1)
+# Sets READ-EXECUTE for Group Owner (5 = 4+0+1)
+# Sets READ-EXECUTE for Others (5 = 4+0+1)
+$ chmod 640 /somefile
+# Sets READ-WRITE for File Owner (6 = 4+2+0)
+# Sets READ for Group Owner (4 = 4+0+0)
+# Sets NO PERMISSIONS for Others (0 = 0+0+0)
+
+`MORE EXAMPLES OF chmod COMMAND:`
+$ chmod +x /somefile
+# Adds EXECUTE permission for all categories (user, group, others) on /somefile
+$ chmod g-w /somefile
+# Removes WRITE permission for the group owner on /somefile
+$ chmod o=r /somefile
+# Sets READ permission only for others on /somefile
+$ chmod u+x,g+w,o-r /somefile
+# Adds EXECUTE permission for the user, adds WRITE permission for the group,
+# and removes READ permission for others on /somefile
+
+"Files becoming executable in an uncontrolled way are a major security issue. 
+For that reason, if you want to apply the execute permission in a recursive way,
+you should apply it as X, not x. So instead of using chmod -R a+x files,
+use chmod -R a+X files. This ensures that subdirectories will obtain the execute 
+permission but the execute permission is not applied to any files."
+
+$ chmod -R a+X ~/somedir
+=============================================================================================
+< Understanding Advanced Permissions >
++ There are three advanced permission settings in Linux:
+1. Set User ID (setuid or SUID)
+2. Set Group ID (setgid or SGID)
+3. Sticky Bit
+---------------------------------------------------------------
+1. Set User ID (setuid or SUID)
+"When the setuid permission is set on an executable file, it allows users to run the file with
+the permissions of the file owner, rather than their own permissions."
+For example, the 'passwd' command has the setuid bit set, allowing users to change their passwords
+even though the /etc/shadow file is owned by root.
+
+```bash
+[root@alma9 ~]# ls -l /usr/bin/passwd
+-rwsr-xr-x. 1 root root 32656 Apr 14  2022 /usr/bin/passwd 
+``` # smaller case 's' indicates both suid and execute is set.
+
+# If in case you find an uppercase 'S' in place of 's' like below:
+```bash
+-rwSr-xr-x. 1 root root 32656 Apr 14  2022 /usr/bin/passwd 
+``` # it means execute permission is NOT set for user. Only suid is set.
+
++ Numeric representation of setuid is 4.
++ When combined with standard permissions, add 4 to the user (owner) permission digit.
+For example, to set read, write, and execute permissions for the owner along with setuid,
+read and execute for the group, and read and execute for others, you would use 4755.
+
+$ chmod u+s /path/to/executable
+# Sets the setuid permission on the specified executable file.
+---------------------------------------------------------------
+2. Set Group ID (setgid or SGID)
+"It does two things, if it is applied to an executable file, it allows users to run the file with
+the permissions of the file's group owner. If it is applied to a directory, it ensures that files
+created within that directory inherit the group ownership of the directory, rather than the primary
+group of the user who created the file."
+
++ Numeric representation of setgid is 2.
++ When combined with standard permissions, add 2 to the group permission digit.
+For example, to set read, write, and execute permissions for the owner, read, write, and execute
+for the group along with setgid, and read and execute for others, you would use 2775.
+
+$ chmod g+s /path/to/directory
+# Sets the setgid permission on the specified directory.
+---------------------------------------------------------------
+3. Sticky Bit
+"When the sticky bit is set on a directory, it restricts file deletion within that directory.
+Only the file owner, the directory owner, or the root user can delete or rename files
+within that directory, regardless of the directory's write permissions."
+
+When you apply sticky bit, a user can delete files only if one of the following is true:
+The user has root access.
+The user is owner of the file.
+The user is owner of the directory where the file exists.
+
++ Lowercase 't' indicates both sticky bit and execute is set.
++ Uppercase 'T' indicates sticky bit is set but execute is NOT set.
+
++ Numeric representation of sticky bit is 1.
++ When combined with standard permissions, add 1 to the others permission digit.
+For example, to set read, write, and execute permissions for the owner, 
+read and execute for the group,
+and read and execute along with sticky bit for others, you would use 1755.
+
+$ chmod +t /path/to/directory
+# Sets the sticky bit on the specified directory.
+=============================================================================================
