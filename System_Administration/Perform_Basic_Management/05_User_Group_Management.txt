@@ -1,0 +1,192 @@
+# The following RHCSA exam objectives are covered in this chapter:
+# Create, delete, and modify local user accounts
+# Change passwords and adjust password aging for local user accounts
+# Create, delete, and modify local groups and group memberships
+# Configure superuser access
+=============================================================================================
+< Understanding Different USER Types >
++ There are Privileged Users and Unprivileged Users.
+1. Privileged Users
+  - Have more rights than unprivileged users.
+  - Can perform administrative tasks.
+  - Example: root user (UID 0)
+# Can do anything on the system without any restrictions. They can FUCKKK U.
+# Some people make it a habit of working with root all the time. This is a bad practice.
+# Always use a normal user account for day-to-day work and switch to root only when necessary.
+# You may have a user with sudo privileges. This user can perform administrative tasks.
+# This helps to prevent accidental changes to the system and improves security.
+2. Unprivileged Users
+  - Have limited rights.
+  - Can perform only non-administrative tasks.
+  - Example: regular users (UID > 1000)
+# Cannot perform administrative tasks without using sudo or switching to a privileged user.
+
+$ id username # To check user ID (UID) and group ID (GID)
+$ id # To check current user ID (UID) and group ID (GID)
+=============================================================================================
+< Working with ROOT >
+$ su 
+# Opens a subshell as root user. You will be prompted for the root password.
+$ su -
+# Opens a login shell as root user. You will be prompted for the root password.
+# The login shell reads the root user's environment variables and configuration files.
+# This is useful when you want to work in the root user's environment.
+# The hyphen (-) is important. Without it, you will not get the root user's environment.
+# It is better than su.
+$ sudo
+# Allows authorized users to work with administrator privileges.
+$ whoami
+# Displays the current user.
+$ exit
+# Exits from the current shell.
+
+$ usermod -aG wheel username
+# Adds an existing user to an existing group. The -a option appends the user to the group.
+# The -G option specifies the group to which the user is to be added.
+# The wheel group is a special group that allows its members to use the sudo command.
+$ visudo # and make sure that the line %wheel ALL=(ALL) ALL is uncommented
+
+( Policy Kit )
+" PolicyKit is a framework for defining and handling authorizations. It is used by
+various desktop environments and applications to manage system-wide privileges. Graphical
+applications can use PolicyKit to request elevated privileges for specific actions, such as
+installing software or changing system settings. This allows users to perform administrative
+tasks without needing to log in as the root user or use the sudo command in a terminal.
+PolicyKit provides a way to control access to system resources based on user roles and
+permissions. It is commonly used in conjunction with desktop environments like GNOME and KDE
+to provide a seamless user experience while maintaining system security. "
+=============================================================================================
+< Creating and Managing Users Accounts >
+1. System Accounts
+  - Used by system services and applications.
+  - Have UIDs below 1000.
+  - Example: apache, mysql, postfix, etc.
+2. Regular User Accounts
+  - Used by human users to log in and perform tasks.
+  - Have UIDs 1000 and above.
+  - Example: alice, bob, charlie, etc.
+
+( /etc/passwd ) # User account information file
+# Contains information about user accounts.
+? username:password:UID:GID:User Info:Home Directory:Shell
+# username: The name of the user account.
+# password: An 'x' indicates that the password is stored in the /etc/shadow file.
+# UID: The user ID number. 0 is for root, 1-999 are for system accounts, 
+#      and 1000 and above are for regular users.
+# GID: The primary group ID number for the user.
+# User Info: A comment field that can contain additional information about the user 
+#           (e.g., full name).
+# Home Directory: The path to the user's home directory.
+# Shell: The path to the user's default shell (e.g., /bin/bash).
+
+( /etc/shadow ) # Shadow password file
+# Contains encrypted password information and password aging information.
+? username:encrypted_password:last_change:min_age:max_age:warn:inactive:expire:reserved
+# username: The name of the user account.
+# encrypted_password: The encrypted password. A '!' or '*' indicates that the account is locked.
+# last_change: The number of days since January 1, 1970, when the password was last changed.
+# min_age: The minimum number of days required between password changes.
+# max_age: The maximum number of days the password is valid.
+# warn: The number of days before password expiration that the user is warned.
+# inactive: The number of days after password expiration that the account is disabled.
+# expire: The number of days since January 1, 1970, when the account will be disabled.
+# reserved: A reserved field for future use.
+
+$ useradd aashish
+$ userdel aashish
+$ usermod -l new_username old_username
+$ passwd username
+
+< Managing Passwords Properties >
+$ chage --help
+$ passwd --help
+
+'Modifying the Configuration Files'
+You can create user accounts by directly editing the /etc/passwd and /etc/shadow files.
+However, this is not recommended as it can lead to inconsistencies and errors.
+
+$ vipw # To safely edit the /etc/passwd file
+$ vipw -s # To safely edit the /etc/shadow file
+$ vigr # To safely edit the /etc/group file
+-----
+1. Home Directory
+"All normal users will have a home directory. For people, the home directory is the directory 
+where personal files can be stored. For system accounts, the home directory often contains
+the working environment for the service account.
+
+When creating home directories (which happens by default while you’re creating users), the
+content of the “skeleton” directory is copied to the user home directory. The skeleton directory is
+/etc/skel, and it contains files that are copied to the user home directory at the moment this
+directory is created. These files will also get the appropriate permissions to ensure that the new
+user can use and access them."
+( /etc/skel )
+2. Default Shell
+"For normal users, the default shell is usually /bin/bash. For most system users, the shell is
+/bin/false or /sbin/nologin. This prevents system users from logging in to the system interactively."
+-----
+< Configuration Files for User Management Defaults >
+( /etc/default/useradd )
+# Contains default values for user account creation.
+
+( /etc/login.defs )
+# Contains configuration for user account and password policies.
+# Defines UID and GID ranges for regular users and system accounts.
+# Defines password aging policies.
+# Defines other login-related settings.
+
+< Creating a User Environment >
+
+/etc/profile: Used for default settings for all users when starting a login shell
+/etc/bashrc: Used to define defaults for all users when starting a subshell
+~/.profile: Specific settings for one user applied when starting a login shell
+~/.bashrc: Specific settings for one user applied when starting a subshell
+
+=============================================================================================
+< Creating and Managing Groups >
+( /etc/group ) # Group information file
+" Every Linux user is a member of at least one group. There are two types of groups: primary and
+supplementary (or secondary) groups. A user’s primary group is defined in the /etc/passwd file, while
+supplementary groups are listed in the /etc/group file. A user can be a member of multiple supplementary groups, which
+allows for flexible permission management."
+
++ Secondary Groups are important for managing access to shared resources.
+$ groupadd groupname
+$ groupdel groupname
+$ groupmod -n new_groupname old_groupname # groupmod is to manage group properties
+
+$ groupmems --help 
+  The groupmems command allows a user to administer their own group
+       membership list without the requirement of superuser privileges. The
+       groupmems utility is for systems that configure its users to be in their
+       own name sake primary group (i.e., guest / guest).
+
+       Only the superuser, as administrator, can use groupmems to alter the
+       memberships of other groups.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
