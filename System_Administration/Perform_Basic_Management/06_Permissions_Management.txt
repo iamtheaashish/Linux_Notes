@@ -178,3 +178,78 @@ and read and execute along with sticky bit for others, you would use 1755.
 $ chmod +t /path/to/directory
 # Sets the sticky bit on the specified directory.
 =============================================================================================
+< Setting Default Permissions with umask >
+"umask" is a command that sets default permission (also known as "file creation mask")
+for newly created files and directories.
+It determines the maximum permissions that can be set for new files and directories by
+masking out (removing) certain permissions.
+
++ The default umask value is typically 022 or 002.
++ The umask value is subtracted from the default permissions:
+  - Default file permissions are 666 (read and write for owner, group, and others).
+  - Default directory permissions are 777 (read, write, and execute for owner, group, and others).
+
+For example, with a umask of 022:
+- New files will have permissions of 644 (666 - 022).
+- New directories will have permissions of 755 (777 - 022).
+
+To set the umask value, use the following command:
+```bash
+$ umask 022
+```
+
+* Viewing current umask value *
+```bash
+$ umask
+```
+
+* Changing umask for all users *
+```bash
+$ echo "umask 022" >> /etc/profile
+```
+This command appends the umask setting to the global profile file, 
+ensuring that all users have the specified umask value applied to their sessions.
+
+* Changing umask for a specific user *
+```bash
+$ echo "umask 027" >> /home/username/.bashrc
+```
+This command appends the umask setting to the user's .bashrc file.
+
+# We can also make a script file and save it in /etc/profile.d/
+# directory to set umask for all users.
+=============================================================================================
+< Access Control Lists (ACLs) >
+"ACLs provide a more flexible way to manage file and directory permissions beyond the traditional
+user-group-other model. With ACLs, you can set permissions for multiple users and groups on
+a single file or directory.
+
+ACLs allow us to apply a more specific set of permissions to a file or directory without 
+(necessarily) changing the base ownership and permissions.
+They let us `tack on` access for other users or groups."
+
+$ getfacl filename # we can view current ACLs using getfacl command
+
+$ setfacl [option] [action/specification] filename # syntax for setfacl command
+
+Example usages of setfacl command:
+$ setfacl -m u:linda:rwx /somefile
+# Modifies the ACL of /somefile to give user 'linda' read, write, and execute permissions.
+$ setfacl -m g:account:rx /somedir
+# Modifies the ACL of /somedir to give group 'account' read and execute permissions.
+$ setfacl -x u:linda /somefile
+# Removes the ACL entry for user 'linda' from /somefile.
+
+* More to know about ACLs: *
+1.Backup and restore ACLs using getfacl and setfacl commands.
+```bash
+getfacl -R /home > acls_backup.txt
+setfacl --restore=acls_backup.txt
+```
+2. It doesn't support FAT32 and exFAT file systems.
+3. To enable ACLs on a filesystem, it must be mounted with the 'acl' option.
+4. Default ACLs can be set on directories to define permissions for newly created files
+*  and subdirectories within them.
+
+
+=============================================================================================
