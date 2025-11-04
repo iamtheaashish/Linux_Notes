@@ -1,0 +1,179 @@
+# The following RHCSA exam objectives are covered in this chapter:
+#   Configure IPv4 and IPv6 addresses
+#   Configure hostname resolution
+
+Old network service has been replaced by NetworkManager-related tools like `nmcli` and `nmtui`.
+
+< Foundation Topics >
+* Network Fundamentals *
+To setup netowrking on a server, your server needs a unique address on the network.
+For this purpose, IP(Internet Protocol) addresses are used.
+
+`IPv4` addresses are 32-bit numeric addresses written as four decimal numbers separated by dots.
+Each number can be from 0 to 255. Example: `192.168.1.11`
+
+`IPv6` addresses are 128-bit alphanumeric addresses written in eight groups of four hexadecimal 
+digits separated by colons.
+Example: `2001:0db8:85a3:0000:0000:8a2e:0370:7334`
+
+We will mostly use `IPv4` addresses in this notes. 
+As most Sys Admins prefer `IPv4`, it is important to understand its configuration and management.
+---
+World ran out of IPv4 addresses, so `IPv6` was introduced to solve this problem.
+But adoption of `IPv6` has been slow due to various reasons.
+One of the main reasons is that `IPv4` and `IPv6` are not directly compatible with each other.
+So, both protocols are being used simultaneously in many networks.
+This is called `Dual Stack` configuration.
+---
+"When private addresses are used, the nodes that are using them cannot access the Internet
+directly, and nodes from the Internet cannot easily access them. Because that is not very
+convenient, Network Address Translation (NAT) is commonly used on the router that connects the
+private network to the Internet. In NAT, the nodes use a private IP address, but when accessing the
+Internet, this private IP address is replaced with the IP address of the NAT router. 
+Hence, nodes on the Internet think that they are communicating with the NAT router, and not with
+the individual hosts.
+The NAT router in its turn uses tables to keep track of all connections that currently exist for the
+hosts in the network. Based on this table, the NAT router helps make it possible for computers with
+a private IP address to connect to hosts on the Internet anyway. The use of NAT is very common; it
+is embedded in most routers that are used in home and small business networks to connect
+computers and other devices in those networks to the Internet."
+
++ Subnet Mask +
+To know to which network a computer belongs, subnet masks are used.
+A subnet mask is a 32-bit number that masks an IP address and divides the IP address
+into network address and host address.
+
+Example:
+    IP Address: 192.168.1.11
+    Subnet Mask: 255.255.255.0
+----
++ MAC Address + 
+Each network card also has a 12-byte MAC address.
+MAC addresses are important, though, because they help
+computers find the specific network card that an IP address belongs to.
+When a computer wants to send data to another computer on the same network,
+it uses the MAC address to find the correct network card.
+----
++ Ports and Protocols +
+
+================================================================================================
+< Managing Network Addresses and Interfaces >
+
++ Network Card Names +
+In RHEL 9,
+1. Ethernet interfaces begin with "en" (for example, enp0s3).
+2. Wireless interfaces begin with "wl" (for example, wlp2s0).
+3. WWAN interfaces begin with "ww" (for example, wwp0s20u4).
+
+* The next part of the name represents the type of adapter. 
+* An o is used for onboard, s is for a hotplug slot, and p is for a PCI location.
+* Administrators can also use x to create a device name that is based on the 
+* MAC address of the network card. 
+
+* Then follows a number, which is used to represent an index, ID, or port.
+
+================================================================================================
+< Validating Network Configuration >
+Using `ip` command to check network configuration:
+$ ip addr # Show all IP addresses assigned to all network interfaces
+$ ip addr show enp0s3 # Show IP address assigned to specific interface
+$ ip a s enp0s3 # Shorter version to show IP address of specific interface
+$ ip route # Show routing table
+$ ip link show enp0s3 # Show detailed information about specific interface
+
+```bash
+[aashish@alma-9b ~]$ ip addr show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: ens160: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 00:0c:29:1f:95:de brd ff:ff:ff:ff:ff:ff
+    altname enp3s0
+    inet 192.168.1.11/24 brd 192.168.1.255 scope global dynamic noprefixroute ens160
+       valid_lft 84775sec preferred_lft 84775sec
+    inet6 2401:4900:8f61:b92b:20c:29ff:fe1f:95de/64 scope global dynamic noprefixroute 
+       valid_lft 59966sec preferred_lft 59966sec
+    inet6 fe80::20c:29ff:fe1f:95de/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever
+```
+The loopback interface is used for communication between processes. 
+The `ens160` interface is the Ethernet interface with both IPv4 and IPv6 addresses assigned.
+
++ Validating Routing
+ On every network that needs to communicate to
+nodes on other networks, routing is a requirement. 
+
+$ ip route show # Show routing table
+
++ Validating the Availability of Ports and Services
+$ ss -lt # Show all listening TCP ports
+$ ss -lu # Show all listening UDP ports
+$ ss -tuln # Show all listening TCP and UDP ports with numeric addresses
+
+$ netstat -tuln # Alternative command to show all listening TCP and UDP ports.
+================================================================================================
+< Managing Network Configuration with nmtui and nmcli >
+NetworkManager is the service that manages network configuration on RHEL 9 systems.
+$ systemctl status NetworkManager # Check status of NetworkManager service
+$ systemctl start NetworkManager # Start NetworkManager service
+$ systemctl stop NetworkManager # Stop NetworkManager service
+$ systemctl enable NetworkManager # Enable NetworkManager service to start at boot
+$ systemctl disable NetworkManager # Disable NetworkManager service from starting at boot
+
+We have two tools to manage network configuration using NetworkManager:
+1. nmtui - A text-based user interface for NetworkManager.
+2. nmcli - A command-line interface for NetworkManager.
+
+# Root user can make modifications to network configuration.
+# If Ordinary user is logged in to the local console, he can also make modifications.
+# But if Ordinary user is logged in remotely via SSH, he cannot make modifications.
+
+"I have alma 9 VM on my Debian Host machine. I have logged in to alma 9 VM 
+remotely via SSH as Ordinary user. When I tried to see my permissions, most of them are disabled.
+
+With same user and no other modifications, I logged in to alma 9 VM locally via GUI console.
+When I checked my permissions, all of them are enabled."
+
+$ nmcli general permissions # Check if Ordinary user can make modifications
+
+$ nmcli con show # Show all network connections
+
+$ nmcli con show ens160 # Show details of specific connection
+
+$ man 5 nm-settings # Read nm-settings manual for details about configuration files
+----
+$ nmtui # Start nmtui text-based user interface
+* Use arrow keys to navigate.
+* Use Enter key to select an option.
+* Use Tab key to switch between fields.
+* Use Esc key to go back or exit.
+* Use Space key to select/deselect checkboxes.
+
++ Working on Network Configuration Files +
+NetworkManager stores network configuration files in
+`/etc/NetworkManager/system-connections/` directory.
+
+Each connection has its own configuration file with `.nmconnection` extension.
+================================================================================================
+< Setting up Hostname and Name Resolution >
+$ nmtui 
+You can use nmtui to set hostname as well.
+
+Or you can use `hostnamectl` command to set hostname.
+$ hostnamectl set-hostname myserver.example.com # Set static hostname
+$ hostnamectl status # Show current hostname and related information
+
+or you can edit the contents of `/etc/hostname` file directly.
+----------------------------------------------------------------
++ /etc/hosts File +
+The `/etc/hosts` file is used for local hostname resolution.
+It maps IP addresses to hostnames.
+
+Example contents of `/etc/hosts` file:
+```bash
+127.0.0.1   localhost
+192.168.1.100   myserver.example.com   myserver```
+
