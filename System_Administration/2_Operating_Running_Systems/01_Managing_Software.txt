@@ -1,0 +1,141 @@
+# The following RHCSA exam objective is covered in this chapter:
+# Install and update software packages from Red Hat Network, a remote repository, or from the
+# local file system
+=============================================================================================
+< Managing Software with dnf >
+Default Package Manager in RHEL 8 and later is DNF (Dandified Yum)
+DNF is designed to work with repositories, which are online depots of available software packages.
+
+* Understanding the role of repositories
++ The maintainer of the repository publishes updated packages to the repository.
++ The package manager (DNF) connects to the repository to download and install latest packages.
+
+Major Benefit of DNF:
+- Automatically resolves dependencies when installing packages. 
+- (Software packeages depend on other packages to function properly)
+- DNF automatically identifies and installs these dependencies.
+
+- Repository system takes care of resolving dependencies automatically.
+
+"Getting in touch with RHEL Repositories is paid service provided by Red Hat.
+So we can use CentOS or Fedora repositories which are free alternatives to RHEL repositories.
+Although it's not at all recommended for production systems."
+
+https://fedoraproject.org/wiki/EPEL 
+# Extra Packages for Enterprise Linux (EPEL) repository provides high-quality add-on packages
+# for RHEL and CentOS.
+
+If you want to learn how to work with repositories, then delete all files in /etc/yum.repos.d .
+--------
+* To tell your server which repositories to use,
+* Create a file that ends with .repo in /etc/yum.repos.d/
+* Add repository details in that file.
+Example:
+```bash
+[repository_name]
+name=Repository Name
+baseurl=http://path/to/repository/
+enabled=1
+gpgcheck=1
+gpgkey=http://path/to/repo/RPM-GPG-KEY-repository_name
+```
+No need to memorize all these from RHEL 9 onwards.
+Just use the command: 
+$ dnf config-manager --add-repo <repository_url>
+$ dnf config-manager --add-repo=http://path/to/repository/
+$ dnf config-manager --add-repo=file:///path/to/local/repository/ 
+
+But make sure to edit the .repo file to set gpgcheck=0 if you don't have the GPG key.
+--------
+* GPG KEYS *
+- GPG (GNU Privacy Guard) is a tool for secure communication and data storage.
+- It is used to sign software packages to verify their authenticity and integrity.
+- When you enable gpgcheck=1, DNF checks the GPG signature of the packages before installing them.
+- If the signature is valid, the package is installed. If not, the installation is aborted.
+- This helps to ensure that the packages you are installing are from a trusted source and have not been tampered with.
+----
+< Creating your own local repository >
+* Create your own local repository to store and manage software packages within your organization.
+Steps to create a local repository:
+1. Insert the installation disk in your virtual machine and make sure it is attached and available.
+
+2. Open a root shell and type mkdir /repo so that you have a mount point where you can mount the ISO file.
+
+3. Add the following line to the end of the /etc/fstab configuration file: /dev/sr0 /repo iso9660 defaults 0 0
+
+4. Type mount -a, followed by mount | grep sr0. You should now see that the optical device is
+* mounted on the directory /repo. At this point, the directory /repo can be used as a repository.
+
+5. Now, two subdirectories are available through the /repo directory. The BaseOS repository
+* provides access to the base packages, and the Application Stream (AppStream) repository
+* provides access to application streams 
+* To make them accessible,
+* you need to add two files to the /etc/yum.repos.d directory. Start with the file BaseOS.repo. You
+* can generate this file using 
+dnf config-manager --add-repo=file:///repo/BaseOS
+
+6. Add the file /etc/yum.repos.d/AppStream.repo using the following command: 
+dnf config-manager --add-repo=file:///repo/AppStream
+
+7. Type ls /etc/yum.repos.d/. This will show you two new files: repo_BaseOS.repo and repo_AppStream.repo. 
+* Add the following line to the end of both files: gpgcheck=0
+
+8. Type dnf repolist to verify the availability of the newly created repository. 
+===============================================================================================
+< Using DNF >
+$ dnf search <package_name>         # Search for a package
+$ dnf info <package_name>           # Get detailed information about a package
+$ dnf wp <package_name>             # Check which package provides a specific file
+$ dnf install <package_name>        # Install a package
+$ dnf remove <package_name>         # Remove a package
+$ dnf update <package_name>         # Update a specific package
+$ dnf update                        # Update all packages
+$ dnf list installed                # List all installed packages
+$ dnf list kernel                   # List all available kernel packages
+$ dnf history                       # See the transaction history
+$ dnf module list                  # List all available modules
+
++ Working with Package Groups
+$ dnf group list                    # List all available package groups
+$ dnf group info "Group Name"       # Get detailed information about a package group
+$ dnf group install "Group Name"    # Install a package group
+$ dnf group remove "Group Name"     # Remove a package group
+$ dnf group list hidden             # List hidden package groups
+===============================================================================================
+< Managing Package Modules >
+"The BaseOS repository is for core operating system packages, and all packages in this 
+repository will not change their major version during the distribution lifetime. The
+
+Application Stream (AppStream) repository contains other packages that may change their major
+version during the distribution lifetime."
+
+A module is a collection of RPM packages that are grouped together to provide a specific functionality or
+application. Modules allow you to manage multiple versions of software packages and their dependencies
+as a single unit.
+===============================================================================================
+< Managing Software with rpm >
+"Earlier Repositories didn't exist. So we used rpm package manager to manage software.
+RPM (Red Hat Package Manager) is a low-level package manager that is used to install,
+update, and remove software packages on RHEL and other RPM-based Linux distributions.
+
+RPM does not handle dependencies automatically. If a package depends on other packages,
+you need to manually install those dependencies before installing the main package."
+
+$ rpm -ivh <package_file.rpm>        # Install a package
+$ rpm -Uvh <package_file.rpm>        # Upgrade a package
+$ rpm -e <package_name>               # Remove a package
+$ rpm -q <package_name>               # Query if a package is installed
+$ rpm -qa                             # List all installed packages
+$ rpm -qi <package_name>              # Get detailed information about a package
+$ rpm -ql <package_name>              # List files installed by a package
+$ rpm -qc <package_name>              # List configuration files of a package
+
++ RPM filenames
+The RPM filename format is: name-version-release.architecture.rpm
+Example: vim-8.0.1763-15.el8.x86_64.rpm
+- name: vim
+- version: 8.0.1763
+- release: 15.el8
+- architecture: x86_64
+===============================================================================================
+# end of note
