@@ -1,0 +1,190 @@
+# The following RHCSA exam objectives are covered in this chapter:
+# Identify CPU/memory-intensive processes and kill processes
+# Adjust process scheduling
+# Manage tuning profiles
+=============================================================================================
+< FOUNDATION TOPICS >
+For everything that happens on a Linux server, a process is started.
+A major distinction can be made between three process types:
+1. Shell Jobs: Commands started by the user from the command line interface (CLI) or a script.
+* They are also called as Interactive Processes. They are associated with a terminal session.
+
+2. Daemons are processes that provide services. They normally are started when a computer 
+* is booted and often run with root privileges. They are also called as Background Processes.
+* They are not associated with a terminal session.
+
+3. Kernel Threads are part of Linux Kernel. You can't manage them using common tools,
+*  But for monitoring of performancy on a system, it's important to know about them.
+
++ Managing SHELL JOBS
+" By default, when you start a process from the command line, it runs in the foreground.
+But for processes that take a long time to complete, you may want to run them in the background
+so that you can continue to use the terminal session.
+
+You can start it with an & behind it. This command immediately starts the job in the background 
+to make room for other tasks to be started from the command line."
+$ sleep 300 &
+[1] 1234
+"Here, 1 is the job number, and 1234 is the process ID (PID) of the sleep command.
+
+Now to move the last job that was started in the background to the foreground, 
+you can use the fg command:"
+$ fg %1
+"Press Ctrl+Z to suspend the job and return to the command line.
+Press Ctrl+D to terminate the job. EOF End Of File."
+$ bg %1 # To move the suspended job to the background again.
+$ jobs  # To list all jobs started in the current terminal session.
+
++ Parent-Child Relationship
+"Every process is started from a shell, becomes a child process of that shell.
+The shell itself is a child process of the systemd process, which is the first process started
+when the system is booted and has a PID of 1.
+The parent is needed to manage the child. For that reason, all processes started from a shell 
+are terminated when that shell is stopped."
+=============================================================================================
+< Using COMMON COMMAND LINE TOOLS TO MANAGE PROCESSES >
+* Understanding Processes and Threads *
+"Tasks on Linux are typically started as processes. One process can start several worker threads.
+Working with threads makes sense, because if the process is very busy, the threads can be
+handled by different CPUs or CPU cores available in the machine. As a Linux administrator,
+you cannot manage individual threads; you can manage processes, though.
+It is the programmer of the multithreaded application that has to define how threads relate
+to one another.
+
+Kernel Processes are enclosed in square brackets [] when you view them with commands 
+like ps or top.
+As an administrator, you need to know that kernel threads cannot be managed. You cannot adjust 
+their priority; neither is it possible to kill them, except by taking the entire machine down."
+
+$ ps # Display information about process started by the current user in the current shell
+$ ps aux # Short summary of all processes running on the system
+$ ps -ef # To see exact command used to start the process
+$ pstree # Display a tree of processes
+$ ps fax # Show parent-child relationship in a tree format
+
+$ top # Dynamic real-time view of running system
+$ htop # An improved version of top command (may need to install it first)
+-------------------------------------------------------------
+* Understanding Process Priorities *
+On modern Linux systems, cgroups are used to allocate system resources. 
+In cgroups, three system areas, the so-called slices, are defined:
+
+`system` : This is where all systemd-managed processes are running.
+`user` : This is where all user processes (including root processes) are running.
+`machine` : This optional slice is used for virtual machines and containers.
+
+By default, all slices have the same CPUWeight. 
+That means that CPU capacity is equally divided if there is high demand.
+All processes in the system slice get as much CPU cycles as all processes in the user slice,
+and that can result in surprising behavior.
+Within a slice, process priority can be managed by using nice and renice.
+
+* Managing Process Priorities *
+"Every process has a nice value that defines its priority.
+The nice value can range from -20 (highest priority) to 19 (lowest priority).
+By default, all processes are started with a nice value of 0.
+Only the root user can start processes with a negative nice value (higher priority).
+Regular users can only start processes with a nice value of 0 or higher (lower priority).
+
+To start a process with a specific nice value, use the nice command followed by the
+desired nice value and the command to start the process."
+$ nice -n 10 <command> # Start a process with a nice value of 10
+"To change the nice value of an already running process, use the renice command followed by
+the desired nice value and the PID of the process."
+$ renice -n 5 -p <PID> # Change the nice value of a process to 5
+-------------------------------------------------------------
+* Sending Signals to Processes with kill, killall, pkill *
+ In older versions of Linux, killing a parent process would also kill all of its child processes.
+ In RHEL 9, if you kill a parent process,
+ all of its child processes become `children of the systemd process.`
+
+ - We can send many types of signals to a process. 
+ $ man 7 signal # To see all available signals
+
+- The most commonly used signals are:
+  SIGTERM (15): This is the default signal sent by the kill command. 
+  It requests a process to terminate gracefully.
+
+  SIGKILL (9): This signal forces a process to terminate immediately. 
+  It cannot be ignored by the process.
+
+  SIGSTOP(19): This signal pauses a process,
+  which can later be resumed with the SIGCONT(18) signal.
+
+  SIGHUP(1): This signal is often used to instruct a process to reload its 
+  configuration files without terminating.
+
+$ kill <PID> # Send SIGTERM to a process
+$ kill -9 <PID> # Send SIGKILL to a process
+"Sometimes the kill command does not work because the process you want to kill can ignore it. 
+In that case, you can use kill -9 to send the SIGKILL signal to the process.
+Because the SIGKILL signal cannot be ignored, it forces the process to stop,
+but you also risk losing data while using this command.
+In general, it is a bad idea to use kill -9:
+
+* You risk losing data.
+
+* Your system may become unstable if other processes depend on the process you have just killed."
+$ kill -l # List all available signals
+$ pkill <process_name> # Kill process by name
+$ killall <process_name> # Kill all processes with the given name (not recommended, be careful)
+-------------------------------------------------------------
+* Killing Zombie Processes *
+"A zombie process is a process that has completed its execution but still has an 
+entry in the process table. They are harmless, but annoying."
+
+$ ps aux | grep 'Z' # To find zombie processes
+
+To kill it, kill it's parent process, then init (systemd) will adopt it and clean it up. 
+SIMPLE EASY.
+=============================================================================================
+< USING TOP AND HTOP TO MANAGE PROCESSES >
+* Process States *
+"Every process in Linux can be in one of several states. The most common states are:"
+1. Running (R): The process is currently being executed by the CPU.
+2. Sleeping (S): The process is waiting for an event or resource to become available.
+3. Stopped (T): The process has been paused, usually by receiving a SIGSTOP signal.
+4. Zombie (Z): The process has completed execution but still has an entry in the process table.
+
+"Type k in top to kill a process directly from the top interface.
+Type 9 to send SIGKILL to the process.
+Type r to renice a process directly from the top interface."
+
+$ uptime # To see how long the system has been running
+Load average should be less than the number of CPU cores (lscpu) for optimal performance.
+=============================================================================================
+< Using tuned to Optimize System Performance >
+RHEL 9 has a daemon that monitors system activity and provides some profiles.
+
+* tuned Profile Overview *
+1. balanced: This is the default profile that provides a balance between performance 
+* and power consumption.
+
+2. latency-performance: This profile is designed for systems that require low latency,
+* such as real-time applications.
+
+3. network-latency: This profile is optimized for network performance,
+* reducing latency for network-intensive applications.
+
+4. network-throughput: This profile is optimized for maximum network throughput,
+* suitable for file servers and similar applications.
+
+5. powersave: This profile is designed to reduce power consumption,
+* suitable for laptops and mobile devices.
+
+6. throughput-performance: This profile is optimized for maximum CPU performance,
+* suitable for compute-intensive applications.
+
+7. virtual-guest: This profile is optimized for virtual machines,
+* improving performance for guest operating systems.
+
+8. virtual-host: This profile is optimized for host systems running virtual machines,
+* improving performance for the host operating system.
+
+$ dnf install tuned -y # To install tuned if not already installed
+$ systemctl enable --now tuned # To enable and start the tuned service
+$ tuned-adm list # To list all available profiles
+$ tuned-adm active # To see the currently active profile
+$ tuned-adm recommend # To see the recommended profile for the system
+$ tuned-adm profile <profile_name> # To switch to a different profile
+=============================================================================================
