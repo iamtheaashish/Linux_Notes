@@ -1,0 +1,116 @@
+# The following RHCSA exam objective is covered in this chapter:
+# Schedule tasks using at and cron
+
+< Understanding Task Scheduling >
+On a Linux server it is important that certain tasks run at certain times.
+1. Systemd timers
+2. cron 
+3. at
+================================================================================================
+* Using Systemd Timers *
+"Systemd timers are a modern way to schedule tasks on Linux systems that use systemd as
+their init system. They provide more flexibility and features compared to traditional cron jobs."
+
+To create a systemd timer, you need to create two files: a service file and a timer file.
++ The service unit defines how the service should be started,
++ the timer defines when it will be started.
+If you need a service to be started by a timer, you enable the timer, not the service.
+
+$ systemctl cat logrotate.timer
+```bash
+[root@localhost ~]# systemctl cat logrotate.timer
+# /usr/lib/systemd/system/logrotate.timer
+[Unit]
+Description=Daily rotation of log files
+Documentation=man:logrotate(8) man:logrotate.conf(5)
+
+[Timer]
+OnCalendar=daily
+AccuracySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
++ OnCalendar: Specifies when the timer should trigger. In this case, it triggers daily.
++ AccuracySec: Specifies the accuracy of the timer. Here, it is set to 1 hour.
++ Persistent: If set to true, the timer will catch up on missed runs if the system was off 
+            - when the timer was supposed to run.
+* Timing Options in Systemd Timers *
+- OnActiveSec=: Triggers the timer a specified time after it is activated.
+- OnBootSec=: Triggers the timer a specified time after the system boots.
+- OnStartupSec=: Triggers the timer a specified time after systemd starts.
+- OnUnitActiveSec=: Triggers the timer a specified time after the last activation of the
+                    associated service unit.
+- OnUnitInactiveSec=: Triggers the timer a specified time after the last deactivation of
+                      the associated service unit.
+- OnCalendar=: Triggers the timer based on calendar events (e.g., daily, weekly, specific dates).
+================================================================================================
+* Using Cron to Automate Recurring Tasks *
+"Crond service consists of two main components: the cron daemon (crond) and the cron table (crontab).
+The cron daemon runs in the background and checks the crontab files for scheduled tasks to execute
+at specified times."
+$ dnf install crontabs
+$ systemctl status crond
+
+# Timing Syntax in Crontab Files
+A crontab file consists of lines with six fields:
+```
+* * * * * command_to_execute
+- The first five fields represent the time and date when the command should be executed:
+  1. Minute (0-59)
+  2. Hour (0-23)
+  3. Day of the month (1-31)
+  4. Month (1-12)
+  5. Day of the week (0-7) (0 and 7 both represent Sunday)
+- The sixth field is the command to be executed.
+```
+# Special Characters in Crontab
+- Asterisk (*): Represents all possible values for a field.
+- Comma (,): Separates multiple values for a field.
+- Hyphen (-): Specifies a range of values.
+- Slash (/): Specifies step values.
+# Special Strings in Crontab
+- @reboot: Run once at startup.
+- @yearly or @annually: Run once a year (equivalent to "0 0 1 1 *").
+- @monthly: Run once a month (equivalent to "0 0 1 * *").
+- @weekly: Run once a week (equivalent to "0 0 * * 0").
+- @daily or @midnight: Run once a day (equivalent to "0 0 * * *").
+- @hourly: Run once an hour (equivalent to "0 * * * *").
+
+------------------------------------------------------------------------------------------------
+`/etc/crontab` File
+The `/etc/crontab` file is the system-wide crontab file that can be used to schedule tasks for 
+all users. It has an additional field for the user who will execute the command.
+
+`/etc/cron.d/` Directory
+The `/etc/cron.d/` directory can contain multiple crontab files. Each file in this directory follows the same
+format as `/etc/crontab`.
+`/etc/cron.daily/`, `/etc/cron.hourly/`, `/etc/cron.weekly/`, `/etc/cron.monthly/` Directories
+These directories contain scripts that are executed at specific intervals (daily, hourly, weekly, monthly).
+Scripts placed in these directories are executed by the cron daemon at the appropriate times.
+================================================================================================
+* Understanding the Purpose of Anacron *
+"Anacron is a utility that ensures that scheduled tasks are executed even if the system was
+powered off at the scheduled time. It is particularly useful for systems that are not
+running 24/7, such as laptops or desktops."
+Anacron reads its configuration from the `/etc/anacrontab` file.
+
+Unlike cron, anacron isn't a service that runs continuously in the background. 
+Instead, it is typically invoked by the system's startup scripts or by cron itself.
+================================================================================================
+* Using At to Schedule One-Time Tasks *
+"The at command is used to schedule one-time tasks to be executed at a specific time in the
+future. It is useful for tasks that do not need to be repeated regularly."
+$ dnf install at
+$ systemctl status atd
+
+# Scheduling a One-Time Task with At
+To schedule a task with at, use the following syntax:
+```bash
+$ echo "command_to_execute" | at time_specification
+```
+For example, to schedule a task to run at 3 PM tomorrow:
+```bash
+$ echo "sh /path/to/script.sh" | at 3 PM tomorrow
+```
